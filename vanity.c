@@ -121,6 +121,15 @@ int main(int argc, char** argv) {
 
     uint8_t* vanity = (uint8_t*) argv[4];
     int vlen = strlen(argv[4]);
+
+    if(vlen>3 && vlen%2==0 && vanity[0]=='0' && vanity[1]=='x') {
+        printf("[*] parsing vanitybytes as hexstring\n");
+        for(int i = 2; i<vlen; i+=2) {
+            vanity[i/2-1]=char2int(vanity[i])*16+char2int(vanity[i+1]);
+        }
+        vlen=vlen/2-1;
+    }
+    
     printf("[*] Searching for: 0x...");
     int i;
     for(i = 0; i < vlen; i++)
