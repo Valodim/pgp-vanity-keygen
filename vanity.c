@@ -85,6 +85,16 @@ void readkey(int fd, uint8_t** key, int* keylen) {
 
 }
 
+int char2int(char byte) {
+    if (byte >= '0' && byte <= '9')
+        return byte - '0';
+    if (byte >= 'a' && byte <='f')
+        return byte - 'a' + 10;
+    if (byte >= 'A' && byte <='F')
+        return byte - 'A' + 10;
+    return -1;
+}
+
 int main(int argc, char** argv) {
 
     int fd = -1;
@@ -121,6 +131,15 @@ int main(int argc, char** argv) {
 
     uint8_t* vanity = (uint8_t*) argv[4];
     int vlen = strlen(argv[4]);
+
+    if(vlen>3 && vlen%2==0 && vanity[0]=='0' && vanity[1]=='x') {
+        printf("[*] parsing vanitybytes as hexstring\n");
+        for(int i = 2; i<vlen; i+=2) {
+            vanity[i/2-1]=char2int(vanity[i])*16+char2int(vanity[i+1]);
+        }
+        vlen=vlen/2-1;
+    }
+
     printf("[*] Searching for: 0x...");
     int i;
     for(i = 0; i < vlen; i++)
