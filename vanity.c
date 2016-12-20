@@ -85,12 +85,32 @@ void readkey(int fd, uint8_t** key, int* keylen) {
 
 }
 
+int char2int(char byte) {
+    if (byte >= '0' && byte <= '9')
+        return byte - '0';
+    if (byte >= 'a' && byte <='f')
+        return byte - 'a' + 10;
+    if (byte >= 'A' && byte <='F')
+        return byte - 'A' + 10;
+    return -1;
+}
+
+void write_uid(int fd, char* name) {
+    printf("[*] writing %s\n",name);
+    int len=strlen(name);
+    write(fd, "\xb4",1); //User id pocket tag
+    char bytelen[1];
+    bytelen[0] = (char) len;
+    write(fd, bytelen, 1);
+    write(fd, name, len);
+}
+
 int main(int argc, char** argv) {
 
     int fd = -1;
 
-    if(argc != 5) {
-        printf("Usage: $0 keyring.pub keyring.sec timelimit vanitybytes\n");
+    if(argc != 6) {
+        printf("Usage: $0 keyring.pub keyring.sec timelimit vanitybytes uid\n");
         return 1;
     }
 
@@ -121,6 +141,15 @@ int main(int argc, char** argv) {
 
     uint8_t* vanity = (uint8_t*) argv[4];
     int vlen = strlen(argv[4]);
+
+    if(vlen>3 && vlen%2==0 && vanity[0]=='0' && vanity[1]=='x') {
+        printf("[*] parsing vanitybytes as hexstring\n");
+        for(int i = 2; i<vlen; i+=2) {
+            vanity[i/2-1]=char2int(vanity[i])*16+char2int(vanity[i+1]);
+        }
+        vlen=vlen/2-1;
+    }
+
     printf("[*] Searching for: 0x...");
     int i;
     for(i = 0; i < vlen; i++)
@@ -167,7 +196,7 @@ int main(int argc, char** argv) {
         return 2;
     }
     write(fd, key, keylen);
-    write(fd, "\xb4\x22""fake uid, replace with a valid one", 36);
+    write_uid(fd, argv[5]);
     close(fd);
 
     printf("[+] Reading secret key from %s\n", argv[2]);
@@ -192,7 +221,7 @@ int main(int argc, char** argv) {
         return 2;
     }
     write(fd, key, keylen);
-    write(fd, "\xb4\x22""fake uid, replace with a valid one", 36);
+    write_uid(fd,argv[5]);
     close(fd);
 
     printf("[+] All done!\n");
